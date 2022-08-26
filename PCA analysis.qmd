@@ -1,0 +1,34 @@
+---
+title: "PCA Analysis"
+format: html
+editor: visual
+---
+
+```{r}
+#Loading necessary packages
+
+library(tidyverse)
+library(here)
+library(readr)
+```
+
+```{r}
+#Importing data set
+
+data <- read.csv("ahds.csv")
+```
+
+```{r}
+glimpse(data)
+```
+
+```{r}
+head(data)
+```
+
+```{r}
+data %>% 
+    is.na() %>% 
+    count()
+```
+
