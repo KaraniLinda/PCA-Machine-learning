@@ -4,6 +4,8 @@ format: html
 editor: visual
 ---
 
+
+# Data importation and exploration
 ```{r}
 #Loading necessary packages
 
@@ -15,7 +17,7 @@ library(readr)
 ```{r}
 #Importing data set
 
-data <- read.csv("ahds.csv")
+data <- read.csv("ahds.csv",stringsAsFactors = TRUE )
 ```
 
 ```{r}
@@ -31,6 +33,7 @@ head(data)
 
 summary(data)
 ```
+
 ```{r}
 library(skimr)
 
@@ -62,46 +65,56 @@ glimpse(data_train)
 ```
 
 
+
+
+# Checking for distribution and outliers using histogram plots
+
 ```{r}
 
 #Plotting the distribution of Saleprice
 data_train %>% 
-    ggplot(aes(x= SalePrice)) + geom_histogram(bins=50)
+    ggplot(aes(x= SalePrice)) + geom_histogram(fill = "lightblue", colour = "white", bins=30)
 ```
+
+
 ```{r}
-#Checking for outliers using box plots
+#Plotting distribution of Lot Area
 
 data_train %>% 
-    ggplot(aes(x= Lot.Area)) + geom_boxplot() 
+    ggplot(aes(x= Lot.Area)) + geom_histogram(fill = '#006EA1', color = 'white', bins = 15) +
+  labs(title = 'Lot size in square feet',
+       x = 'Lot size',
+    ) 
 
 ```
 
-
-
 ```{r}
 
-#Checking for outliers using box plots
+#Plotting distribution of Basement Area
 
 library(tidyverse)
 
 data_train %>% 
-    ggplot(aes(x= Total.Bsmt.SF)) + geom_boxplot()
+    ggplot(aes(x= Total.Bsmt.SF)) + geom_histogram(fill = '#006EA1', color = 'white', bins = 15) +
+  labs(title = 'Total square feet of Basement area before tranformation',
+       x = 'Total square Feet',
+    )
 ```
 
 ```{r}
-#Checking for outliers using box plots
+#Plotting Distribution of Garage size
 
 library(tidyverse)
 
 data_train %>% 
-    ggplot(aes(x= Garage.Area)) + geom_boxplot()
+    ggplot(aes(x= Garage.Area)) + geom_histogram(fill = '#006EA1', color = 'white', bins = 15) +
+  labs(title = 'Size of Garage in square feet before transformation',
+       x = 'Garage square Feet',
+    )
 ```
-
-
-
-
 
 # Creating a recipe to be used with feature and target engineering
+
 ```{r}
 # Feature engineering packages
 library(caret)    # for various ML tasks
@@ -129,25 +142,100 @@ summary(data_recipe)
 ```
 
 
+# Outlier fix and plots
 
 ```{r}
-#Performing outlier fix
+#Normalizing Lot Area
 
 data_recipe %>% 
-    step_YeoJohnson(Lot.Area,Garage.Area,Total.Bsmt.SF) %>% 
+    step_YeoJohnson(Lot.Area) %>% 
     prep() %>% 
-    bake(new_data = data_train)
-    
+    bake(new_data = data_train) %>% 
+
+    ggplot(mapping = aes(x = Lot.Area)) + geom_histogram(fill = '#006EA1', color = 'white', bins = 15) +
+  labs(title = 'Lot size in square feet after transformation',
+       x = 'Lot size',
+    ) 
+  
 
 ```
 
 ```{r}
-#visualize transformed data
 
-data_train %>% 
-    ggplot(aes(x=Garage.Area)) + geom_boxplot()
+#Normalizing Garage area
+
+data_recipe %>% 
+    step_YeoJohnson(Garage.Area) %>% 
+    prep() %>% 
+    bake(new_data = data_train) %>% 
+
+    ggplot(mapping = aes(x = Garage.Area)) + geom_histogram(fill = '#006EA1', color = 'white', bins = 15) +
+  labs(title = 'Size of Garage in square feet after transformation',
+       x = 'Garage square Feet',
+    )
+```
+
+```{r}
+#Normalizing Basement Area
+
+data_recipe %>% 
+    step_YeoJohnson(Total.Bsmt.SF) %>% 
+    prep() %>% 
+    bake(new_data = data_train) %>% 
+
+    ggplot(mapping = aes(x = Total.Bsmt.SF)) + geom_histogram(fill = '#006EA1', color = 'white', bins = 15) +
+  labs(title = 'Total square feet of Basement area after tranformation',
+       x = 'Total square Feet',
+    )
 ```
 
 
+# Visualizing missing values
 
+```{r}
+#missing value summary
+
+library(naniar)
+
+data_train %>% 
+    miss_var_summary()
+```
+
+```{r}
+
+#Visualizing missingness
+data_train %>% 
+    is.na() %>%
+    reshape2::melt() %>%
+    ggplot(aes(Var2, Var1, fill=value)) + 
+    geom_tile() + 
+    coord_flip() +
+    scale_y_continuous(NULL, expand = c(0, 0)) +
+    scale_fill_grey(name = "", 
+                    labels = c("Present", 
+                               "Missing")) +
+    xlab("Observation") +
+    theme(axis.text.y  = element_text(size = 4))
+```
+
+
+# Numerical values imputation
+
+```{r}
+#Fence type 
+
+datanew <- data_recipe %>% 
+    step_impute_knn(Fireplace.Qu, Lot.Frontage, Fence, neighbors = 6 ) %>%
+    prep() %>% 
+    bake(new_data = data_train) 
+
+datanew    
+```
+
+
+```{r}
+datanew %>% 
+    select(Fireplace.Qu, Lot.Frontage, Fence) %>% 
+    summary()
+```
 
