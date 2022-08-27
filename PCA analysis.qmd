@@ -238,4 +238,61 @@ datanew %>%
     select(Fireplace.Qu, Lot.Frontage, Fence) %>% 
     summary()
 ```
+# Calculating skewness
+
+```{r}
+
+library(summarytools)
+summarytools::descr(datanew)
+
+```
+
+```{r}
+
+#Plotting highly skewed variables
+
+datanew %>% 
+    ggplot(aes(x= Gr.Liv.Area)) + geom_histogram(fill = "lightblue", colour = "white", bins=30)
+```
+
+```{r}
+
+#Plotting highly skewed variables
+
+datanew %>% 
+    ggplot(aes(x= Mas.Vnr.Area)) + geom_histogram(fill = "lightblue", colour = "white", bins=30)
+```
+
+# Transforming highly skewed variables
+
+```{r}
+data_recipe %>% 
+    step_YeoJohnson(Mas.Vnr.Area) %>% 
+    prep() %>% 
+    bake(new_data = data_train) %>% 
+
+    ggplot(mapping = aes(x = Mas.Vnr.Area)) + geom_histogram(fill = '#006EA1', color = 'white', bins = 15) +
+  labs(title = 'Total square feet of Basement area after tranformation',
+       x = 'Total square Feet',
+    )
+```
+
+
+# Transforming categorical variables
+
+
+```{r}
+count(datanew, Roof.Matl)
+```
+
+```{r}
+
+#Label encoding
+
+data_recipe %>%
+    step_integer(Roof.Matl) %>%
+    prep(data_train) %>%
+    bake(data_train) %>%
+    count(Roof.Matl)
+```
 
