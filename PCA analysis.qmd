@@ -27,8 +27,127 @@ head(data)
 ```
 
 ```{r}
-data %>% 
-    is.na() %>% 
-    count()
+#Shape of data
+
+summary(data)
 ```
+```{r}
+library(skimr)
+
+skim(data)
+```
+
+```{r}
+library(gtsummary)
+
+data %>% 
+    select(PID, Order) %>% 
+    skim()
+```
+
+# Splitting the data into training and testing sets
+
+```{r}
+library(rsample)
+set.seed(123)
+
+split <- initial_split(data, prop = 0.7, 
+                       strata = "SalePrice")
+
+data_train  <- training(split)
+data_test   <- testing(split)
+
+
+glimpse(data_train)
+```
+
+
+```{r}
+
+#Plotting the distribution of Saleprice
+data_train %>% 
+    ggplot(aes(x= SalePrice)) + geom_histogram(bins=50)
+```
+```{r}
+#Checking for outliers using box plots
+
+data_train %>% 
+    ggplot(aes(x= Lot.Area)) + geom_boxplot() 
+
+```
+
+
+
+```{r}
+
+#Checking for outliers using box plots
+
+library(tidyverse)
+
+data_train %>% 
+    ggplot(aes(x= Total.Bsmt.SF)) + geom_boxplot()
+```
+
+```{r}
+#Checking for outliers using box plots
+
+library(tidyverse)
+
+data_train %>% 
+    ggplot(aes(x= Garage.Area)) + geom_boxplot()
+```
+
+
+
+
+
+# Creating a recipe to be used with feature and target engineering
+```{r}
+# Feature engineering packages
+library(caret)    # for various ML tasks
+library(recipes)  # for feature engineering tasks
+
+data_recipe <- recipe(SalePrice ~ ., data = data_train)
+summary(data_recipe)
+
+```
+
+# Updating Variable roles
+
+```{r}
+data_recipe <- data_recipe %>% 
+               update_role(PID, new_role = "id variable")
+
+summary(data_recipe)
+```
+
+```{r}
+data_recipe <- data_recipe %>% 
+               update_role(Order, new_role = "id variable")
+
+summary(data_recipe)
+```
+
+
+
+```{r}
+#Performing outlier fix
+
+data_recipe %>% 
+    step_YeoJohnson(Lot.Area,Garage.Area,Total.Bsmt.SF) %>% 
+    prep() %>% 
+    bake(new_data = data_train)
+    
+
+```
+
+```{r}
+#visualize transformed data
+
+data_train %>% 
+    ggplot(aes(x=Garage.Area)) + geom_boxplot()
+```
+
+
+
 
