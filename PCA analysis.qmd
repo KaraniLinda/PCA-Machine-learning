@@ -67,7 +67,7 @@ glimpse(data_train)
 
 
 
-# Checking for distribution and outliers using histogram plots
+# Checking for distribution and outliers using plots
 
 ```{r}
 
@@ -81,7 +81,7 @@ data_train %>%
 #Plotting distribution of Lot Area
 
 data_train %>% 
-    ggplot(aes(x= Lot.Area)) + geom_histogram(fill = '#006EA1', color = 'white', bins = 15) +
+    ggplot(aes(x= Lot.Area)) + geom_boxplot(fill = '#006EA1', color = 'black') +
   labs(title = 'Lot size in square feet',
        x = 'Lot size',
     ) 
@@ -95,7 +95,7 @@ data_train %>%
 library(tidyverse)
 
 data_train %>% 
-    ggplot(aes(x= Total.Bsmt.SF)) + geom_histogram(fill = '#006EA1', color = 'white', bins = 15) +
+    ggplot(aes(x= Total.Bsmt.SF)) + geom_boxplot(fill = '#006EA1', color = 'black') +
   labs(title = 'Total square feet of Basement area before tranformation',
        x = 'Total square Feet',
     )
@@ -107,11 +107,40 @@ data_train %>%
 library(tidyverse)
 
 data_train %>% 
-    ggplot(aes(x= Garage.Area)) + geom_histogram(fill = '#006EA1', color = 'white', bins = 15) +
+    ggplot(aes(x= Garage.Area)) + geom_boxplot(fill = '#006EA1', color = 'black') +
   labs(title = 'Size of Garage in square feet before transformation',
        x = 'Garage square Feet',
     )
 ```
+
+# Outlier fix for selected variables using IQR
+
+```{r}
+
+#Getting the interquantile ranges
+
+Q1Garage <- quantile(data_train$Garage.Area, .25)
+Q1Lot <- quantile(data_train$Lot.Area, .25)
+Q1Basement <- quantile(data_train$Total.Bsmt.SF, .25, na.rm = TRUE)
+Q3Garage <- quantile(data_train$Garage.Area, .75)
+Q3Lot <- quantile(data_train$Lot.Area, .75)
+Q3Basement <- quantile(data_train$Total.Bsmt.SF, .75, na.rm = TRUE)
+IQRGarage <- IQR(data_train$Garage.Area)
+IQRBasement <- IQR(data_train$Lot.Area)
+IQRLot <- IQR(data_train$Total.Bsmt.SF, na.rm = TRUE)
+
+```
+
+
+
+```{r}
+noutlier <- data_train %>% 
+    filter(Garage.Area > (Q1Garage - 1.5*IQRGarage) & Garage.Area < (Q3Garage + 1.5*IQRGarage))
+
+noutlier
+```
+
+
 
 # Creating a recipe to be used with feature and target engineering
 
