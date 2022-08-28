@@ -81,9 +81,9 @@ data_train %>%
 #Plotting distribution of Lot Area
 
 data_train %>% 
-    ggplot(aes(x= Lot.Area)) + geom_boxplot(fill = '#006EA1', color = 'black') +
+    ggplot(aes(y= Lot.Area)) + geom_boxplot(fill = '#006EA1', color = 'black') +
   labs(title = 'Lot size in square feet',
-       x = 'Lot size',
+       y = 'Lot size',
     ) 
 
 ```
@@ -95,9 +95,9 @@ data_train %>%
 library(tidyverse)
 
 data_train %>% 
-    ggplot(aes(x= Total.Bsmt.SF)) + geom_boxplot(fill = '#006EA1', color = 'black') +
+    ggplot(aes(y= Total.Bsmt.SF)) + geom_boxplot(fill = '#006EA1', color = 'black') +
   labs(title = 'Total square feet of Basement area before tranformation',
-       x = 'Total square Feet',
+       y = 'Total square Feet',
     )
 ```
 
@@ -107,9 +107,9 @@ data_train %>%
 library(tidyverse)
 
 data_train %>% 
-    ggplot(aes(x= Garage.Area)) + geom_boxplot(fill = '#006EA1', color = 'black') +
+    ggplot(aes(y= Garage.Area)) + geom_boxplot(fill = '#006EA1', color = 'black') +
   labs(title = 'Size of Garage in square feet before transformation',
-       x = 'Garage square Feet',
+       y = 'Garage square Feet',
     )
 ```
 
@@ -129,18 +129,53 @@ IQRGarage <- IQR(data_train$Garage.Area)
 IQRBasement <- IQR(data_train$Lot.Area)
 IQRLot <- IQR(data_train$Total.Bsmt.SF, na.rm = TRUE)
 
+Q1Basement - 1.5*IQRBasement
+
+Q3Basement + 1.5*IQRBasement
 ```
 
 
 
 ```{r}
+
+#Creating a subset without outliers 
+
 noutlier <- data_train %>% 
-    filter(Garage.Area > (Q1Garage - 1.5*IQRGarage) & Garage.Area < (Q3Garage + 1.5*IQRGarage))
+    filter(Garage.Area < (Q3Garage + 1.5*IQRGarage) & Garage.Area > (Q1Garage - 1.5*IQRGarage) & Total.Bsmt.SF < (Q3Basement + 1.5*IQRBasement) & Total.Bsmt.SF > (Q1Basement - 1.5*IQRBasement) & Lot.Area < (Q3Lot + 1.5*IQRLot) & Lot.Area > (Q1Lot - 1.5*IQRLot))
 
 noutlier
 ```
+```{r}
+#Plotting Lot Area without outliers
+
+noutlier %>% 
+    ggplot(aes(y= Lot.Area)) + geom_boxplot(fill = '#006EA1', color = 'black') +
+  labs(title = 'Lot size in square feet after removing outliers ',
+       y = 'Lot size',
+    ) 
+```
+
+```{r}
+#Plotting Garage size without outliers
+
+noutlier %>% 
+    ggplot(aes(y= Garage.Area)) + geom_boxplot(fill = '#006EA1', color = 'black') +
+  labs(title = 'Garage size in square feet after removing outliers ',
+       y = 'Garage size',
+    )
+```
 
 
+
+```{r}
+#Plotting Basement size without outliers
+
+noutlier %>% 
+    ggplot(aes(y= Total.Bsmt.SF)) + geom_boxplot(fill = '#006EA1', color = 'black') +
+  labs(title = 'Basement size in square feet after removing outliers ',
+       y = 'Basement size',
+    )
+```
 
 # Creating a recipe to be used with feature and target engineering
 
@@ -168,54 +203,6 @@ data_recipe <- data_recipe %>%
                update_role(Order, new_role = "id variable")
 
 summary(data_recipe)
-```
-
-
-# Outlier fix and plots
-
-```{r}
-#Normalizing Lot Area
-
-data_recipe %>% 
-    step_YeoJohnson(Lot.Area) %>% 
-    prep() %>% 
-    bake(new_data = data_train) %>% 
-
-    ggplot(mapping = aes(x = Lot.Area)) + geom_histogram(fill = '#006EA1', color = 'white', bins = 15) +
-  labs(title = 'Lot size in square feet after transformation',
-       x = 'Lot size',
-    ) 
-  
-
-```
-
-```{r}
-
-#Normalizing Garage area
-
-data_recipe %>% 
-    step_YeoJohnson(Garage.Area) %>% 
-    prep() %>% 
-    bake(new_data = data_train) %>% 
-
-    ggplot(mapping = aes(x = Garage.Area)) + geom_histogram(fill = '#006EA1', color = 'white', bins = 15) +
-  labs(title = 'Size of Garage in square feet after transformation',
-       x = 'Garage square Feet',
-    )
-```
-
-```{r}
-#Normalizing Basement Area
-
-data_recipe %>% 
-    step_YeoJohnson(Total.Bsmt.SF) %>% 
-    prep() %>% 
-    bake(new_data = data_train) %>% 
-
-    ggplot(mapping = aes(x = Total.Bsmt.SF)) + geom_histogram(fill = '#006EA1', color = 'white', bins = 15) +
-  labs(title = 'Total square feet of Basement area after tranformation',
-       x = 'Total square Feet',
-    )
 ```
 
 
@@ -301,17 +288,30 @@ data_recipe %>%
     bake(new_data = data_train) %>% 
 
     ggplot(mapping = aes(x = Mas.Vnr.Area)) + geom_histogram(fill = '#006EA1', color = 'white', bins = 15) +
-  labs(title = 'Total square feet of Basement area after tranformation',
-       x = 'Total square Feet',
+  labs(title = 'Total Masonry veneer area after tranformation',
+       x = 'Total Area',
+    )
+```
+
+
+```{r}
+data_recipe %>% 
+    step_YeoJohnson(Gr.Liv.Area) %>% 
+    prep() %>% 
+    bake(new_data = data_train) %>% 
+
+    ggplot(mapping = aes(x = Gr.Liv.Area)) + geom_histogram(fill = '#006EA1', color = 'white', bins = 15) +
+  labs(title = 'Total Garage area after tranformation',
+       x = 'Total Area',
     )
 ```
 
 
 # Transforming categorical variables
 
-
 ```{r}
-count(datanew, Roof.Matl)
+count(datanew, Roof.Matl) %>% 
+    arrange(n)
 ```
 
 ```{r}
@@ -323,5 +323,38 @@ data_recipe %>%
     prep(data_train) %>%
     bake(data_train) %>%
     count(Roof.Matl)
+```
+
+```{r}
+count(datanew, Neighborhood) %>% 
+    arrange(n)
+```
+
+```{r}
+#Lumping
+
+data_recipe %>%
+    step_other(Neighborhood, threshold = 0.01, 
+             other = "other") %>%
+    prep(data_train) %>%
+    bake(data_train) %>%
+    count(Neighborhood) %>% 
+    arrange(n)
+```
+# One hot encoding
+
+```{r}
+onehot <- data_recipe %>%
+    step_dummy(Garage.Type, one_hot = TRUE) %>%
+    prep(data_train) %>%
+    bake(data_train)
+
+```
+
+```{r}
+onehot %>% 
+    select(Garage.Type_Attchd,Garage.Type_X2Types,Garage.Type_Basment,Garage.Type_BuiltIn,Garage.Type_CarPort,Garage.Type_Detchd) %>% 
+    summary()
+
 ```
 
