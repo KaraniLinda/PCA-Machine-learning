@@ -82,7 +82,7 @@ data_train %>%
 
 data_train %>% 
     ggplot(aes(y= Lot.Area)) + geom_boxplot(fill = '#006EA1', color = 'black') +
-  labs(title = 'Lot size in square feet',
+  labs(title = 'Lot size in square feet before transformation',
        y = 'Lot size',
     ) 
 
@@ -184,7 +184,7 @@ noutlier %>%
 library(caret)    # for various ML tasks
 library(recipes)  # for feature engineering tasks
 
-data_recipe <- recipe(SalePrice ~ ., data = data_train)
+data_recipe <- recipe(SalePrice ~ ., data = data_train, na.omit(data_train), scale=TRUE )
 summary(data_recipe)
 
 ```
@@ -356,5 +356,35 @@ onehot %>%
     select(Garage.Type_Attchd,Garage.Type_X2Types,Garage.Type_Basment,Garage.Type_BuiltIn,Garage.Type_CarPort,Garage.Type_Detchd) %>% 
     summary()
 
+```
+#Bivariate analysis
+
+```{r}
+data_train %>% 
+    select(SalePrice, MS.Zoning, Foundation, Garage.Type) %>%
+    ggplot(aes(x= Foundation, y= SalePrice )) + geom_boxplot(fill = "green") + 
+    scale_y_continuous(trans = "log10")
+   
+```
+
+
+# Dimension reduction
+
+```{r}
+PCA <- data_recipe %>%
+    step_impute_knn(all_numeric()) %>% 
+    step_center(all_numeric_predictors()) %>%
+    step_scale(all_numeric_predictors()) %>%
+    step_pca(all_numeric_predictors() ,id ="pca" ) %>% 
+    prep(data_train) %>%
+    bake(data_train)
+
+
+PCA
+
+```
+
+```{r}
+is.infinite(data_train)
 ```
 
