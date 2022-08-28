@@ -383,8 +383,15 @@ PCA <- data_recipe %>%
 PCA
 
 ```
-
+# Plotting relationships of PCA with SalesPrice
 ```{r}
-is.infinite(data_train)
+PCA %>% 
+    select(PC1,PC2,SalePrice) %>% 
+    ggplot(aes(x = PC1,y = SalePrice)) +geom_point()
+```
+```{r}
+PCA %>% 
+    select(PC1,PC2,SalePrice) %>% 
+    ggplot(aes(x = PC2,y = SalePrice)) +geom_point()
 ```
 
