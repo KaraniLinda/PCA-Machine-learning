@@ -268,7 +268,8 @@ summarytools::descr(datanew)
 #Plotting highly skewed variables
 
 datanew %>% 
-    ggplot(aes(x= Gr.Liv.Area)) + geom_histogram(fill = "lightblue", colour = "white", bins=30)
+    ggplot(aes(x= Gr.Liv.Area)) + geom_histogram(fill = "lightblue", colour = "white", bins=15) +labs(title = 'Total Garage area before tranformation',
+       x = 'Total Area')
 ```
 
 ```{r}
@@ -276,7 +277,10 @@ datanew %>%
 #Plotting highly skewed variables
 
 datanew %>% 
-    ggplot(aes(x= Mas.Vnr.Area)) + geom_histogram(fill = "lightblue", colour = "white", bins=30)
+    ggplot(aes(x= Mas.Vnr.Area)) + geom_histogram(fill = "lightblue", colour = "white", bins=15) +
+  labs(title = 'Total Masonry veneer area before tranformation',
+       x = 'Total Area',
+    )
 ```
 
 # Transforming highly skewed variables
@@ -334,12 +338,10 @@ count(datanew, Neighborhood) %>%
 #Lumping
 
 data_recipe %>%
-    step_other(Neighborhood, threshold = 0.01, 
-             other = "other") %>%
+    step_integer(Neighborhood) %>%
     prep(data_train) %>%
     bake(data_train) %>%
-    count(Neighborhood) %>% 
-    arrange(n)
+    count(Neighborhood)
 ```
 # One hot encoding
 
@@ -362,7 +364,7 @@ onehot %>%
 ```{r}
 data_train %>% 
     select(SalePrice, MS.Zoning, Foundation, Garage.Type) %>%
-    ggplot(aes(x= Foundation, y= SalePrice )) + geom_boxplot(fill = "green") + 
+    ggplot(aes(x= Garage.Type, y= SalePrice )) + geom_boxplot(fill = "pink") + 
     scale_y_continuous(trans = "log10")
    
 ```
@@ -372,6 +374,7 @@ data_train %>%
 
 ```{r}
 PCA <- data_recipe %>%
+    step_dummy(all_nominal_predictors()) %>% 
     step_impute_knn(all_numeric()) %>% 
     step_center(all_numeric_predictors()) %>%
     step_scale(all_numeric_predictors()) %>%
@@ -387,11 +390,31 @@ PCA
 ```{r}
 PCA %>% 
     select(PC1,PC2,SalePrice) %>% 
-    ggplot(aes(x = PC1,y = SalePrice)) +geom_point()
+    ggplot(aes(x = PC1,y = SalePrice)) +geom_point(colour = "blue")
 ```
 ```{r}
 PCA %>% 
     select(PC1,PC2,SalePrice) %>% 
-    ggplot(aes(x = PC2,y = SalePrice)) +geom_point()
+    ggplot(aes(x = PC2,y = SalePrice)) +geom_point(colour = "blue")
 ```
+
+```{r}
+PCA %>% 
+    select(PC1,PC2,SalePrice)
+```
+
+```{r}
+
+#Dropping all non numerical variables to do a PCA
+
+data.pca <- data_train[, unlist(lapply(data_train,is.numeric))]
+
+data.pca
+```
+```{r}
+#PCA summary
+
+prcomp(PCA)
+```
+
 
